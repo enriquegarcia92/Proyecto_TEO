@@ -9,7 +9,7 @@ T = 2
 T2 = 3
 F = 4
 
-# List of token names.   This is always required
+# List of token names. This is always required
 tokens = (
     'NUMBER',
     'PLUS',
@@ -28,10 +28,11 @@ tokens = (
     'comentario_bloque',
     'cadena',
     'coma',
-    'eof',
+    'hash_include',
+    'preprocessor_directive',
     'int',
-    'float'
-    # 'vacia'
+    'float',
+    'greater_than',  # Nuevo token para '>'
 )
 
 # Regular expression rules for simple tokens
@@ -46,10 +47,7 @@ t_finBloque = r'\}'
 t_finInstruccion = r'\;'
 t_asignacion = r'\='
 t_coma = r'\,'
-t_eof = r'\$'
-
-
-# t_vacia= r'\'
+t_hash_include = r'\#include'
 
 def t_int(t):
     r'(int)'
@@ -79,7 +77,7 @@ t_ignore = ' \t'
 
 
 def t_keyword(t):
-    r'(char)|(return)|(if)|(else)|(do)|(while)|(for)|(void)'
+    r'(char|return|if|else|do|while|for|void)'
     return t
 
 
@@ -89,7 +87,7 @@ def t_identificador(t):
 
 
 def t_cadena(t):
-    r'\".*\"'
+    r'\"[^\"]*\"'
     return t
 
 
@@ -103,11 +101,63 @@ def t_comentario_bloque(t):
     # return t
 
 
+def t_preprocessor_directive(t):
+    r'\#.*'
+    return t
+
+
+def t_greater_than(t):
+    r'>'
+    return t
+
+
 # Error handling rule
 def t_error(t):
-    print("Illegal character '%s'" % t.value[0])
+    print(f"Illegal character '{t.value[0]}' at line {t.lineno}, position {t.lexpos}")
     t.lexer.skip(1)
-    return t
+
+lexer = lex.lex()
+
+# Agregamos el código C a la entrada del lexer
+code = """
+#include <stdio.h>
+
+int suma(int a, int b) {
+    return a + b;
+}
+
+void imprimir_mayor(int x, int y) {
+    if (x > y) {
+        printf("El número %d es mayor que %d\n", x, y);
+    } else {
+        printf("El número %d es menor o igual que %d\n", x, y);
+    }
+}
+
+int main() {
+    int numero_entero = 10;
+    char caracter = 'A';
+    float numero_flotante = 5.5;
+
+    // Llamando a la función suma
+    int resultado = suma(numero_entero, 20);
+    printf("El resultado de la suma es: %d\n", resultado);
+
+    // Llamando a la funcion imprimir_mayor
+    imprimir_mayor(8, numero_entero);
+
+    return 0;
+}
+"""
+
+lexer.input(code)
+
+# Tokenize
+while True:
+    tok = lexer.token()
+    if not tok:
+        break  # No more input
+    print(tok)
 
 
 TT = 1
@@ -138,7 +188,35 @@ lexer = lex.lex()
 def miParser():
     # f = open('fuente.c','r')
     # lexer.input(f.read())
-    lexer.input('int a, b c;$')
+    code = """
+    int suma(int a, int b) {
+        return a + b;
+    }
+
+    void imprimir_mayor(int x, int y) {
+        if (x > y) {
+            printf("El número %d es mayor que %d\n", x, y);
+        } else {
+            printf("El número %d es menor o igual que %d\n", x, y);
+        }
+    }
+
+    int main() {
+        int numero_entero = 10;
+        char caracter = 'A';
+        float numero_flotante = 5.5;
+
+        // Llamando a la función suma
+        int resultado = suma(numero_entero, 20);
+        printf("El resultado de la suma es: %d\n", resultado);
+
+        // Llamando a la funcion imprimir_mayor
+        imprimir_mayor(8, numero_entero);
+
+        return 0;
+    }
+    """
+    lexer.input(code)
 
     tok = lexer.token()
     x = stack[-1]  # primer elemento de der a izq
@@ -187,108 +265,4 @@ def agregar_pila(produccion):
         if elemento != 'vacia':  # la vacía no la inserta
             stack.append(elemento)
 
-
-'''1. S -> Programa
-
-2. Programa -> Instrucciones
-
-3. Instrucciones -> Instruccion Instrucciones | ε
-
-4. Instruccion -> Declaracion | Asignacion | LlamadaFuncion | EstructuraControl | Impresion
-
-5. Declaracion -> TipoDato Identificador ;
-
-6. TipoDato -> int | char | float
-
-7. Identificador -> id
-
-8. Asignacion -> Identificador = Expresion ;
-
-9. LlamadaFuncion -> id ( Argumentos ) ;
-
-10. Argumentos -> Expresion Argumentos' | ε
-
-11. Argumentos' -> , Expresion Argumentos' | ε
-
-12. EstructuraControl -> if ( Expresion ) BloqueCodigo ElseBloque
-
-13. ElseBloque -> else BloqueCodigo | ε
-
-14. BloqueCodigo -> { Instrucciones }
-
-15. Impresion -> printf ( " Cadena " , Expresion ) ;
-
-16. Expresion -> Expresion + Termino | Termino
-
-17. Termino -> Termino * Factor | Factor
-
-18. Factor -> ( Expresion ) | Identificador | Numero | Caracter | LlamadaFuncion
-
-19. Numero -> entero | decimal
-
-20. Caracter -> 'cualquierCaracter'
-
-First(Programa) = { int, char, float, id, if, printf, ε }
-First(Instrucciones) = { int, char, float, id, if, printf, ε }
-First(Instruccion) = { int, char, float, id, if, printf }
-First(Declaracion) = { int, char, float }
-First(TipoDato) = { int, char, float }
-First(Identificador) = { id }
-First(Asignacion) = { id }
-First(LlamadaFuncion) = { id }
-First(Argumentos) = { (, id, entero, decimal, 'c', ε }
-First(Argumentos') = { ,, ε }
-First(EstructuraControl) = { if }
-First(ElseBloque) = { else, ε }
-First(BloqueCodigo) = { { }
-First(Impresion) = { printf }
-First(Expresion) = { (, id, entero, decimal, 'c' }
-First(Termino) = { (, id, entero, decimal, 'c' }
-First(Factor) = { (, id, entero, decimal, 'c' }
-First(Numero) = { entero, decimal }
-First(Caracter) = { 'cualquierCaracter' }
-
-Follow(Programa) = { $ }
-Follow(Instrucciones) = { $ }
-Follow(Instruccion) = { int, char, float, id, if, printf, }, $ }
-Follow(Declaracion) = { int, char, float, id, if, printf, }, $ }
-Follow(TipoDato) = { id }
-Follow(Identificador) = { =, ,, ; }
-Follow(Asignacion) = { int, char, float, id, if, printf, }, $ }
-Follow(LlamadaFuncion) = { int, char, float, id, if, printf, }, $ }
-Follow(Argumentos) = { ) }
-Follow(Argumentos') = { ) }
-Follow(EstructuraControl) = { int, char, float, id, if, printf, }, $ }
-Follow(ElseBloque) = { int, char, float, id, if, printf, }, $ }
-Follow(BloqueCodigo) = { int, char, float, id, if, printf, }, $ }
-Follow(Impresion) = { int, char, float, id, if, printf, }, $ }
-Follow(Expresion) = { +, ), ; }
-Follow(Termino) = { +, ), ; }
-Follow(Factor) = { +, *, ), ; }
-Follow(Numero) = { +, *, ), ; }
-Follow(Caracter) = { +, *, ), ; }
-
-| No Terminal      | int | char | float | id | if | else | { | } | ( | ) | , | ; | printf | + | * | / | entero | decimal | 'c' | $ |
-|------------------|-----|------|-------|----|----|------|---|---|---|---|---|---|--------|---|---|---|--------|---------|-----|---|
-| Programa         | 1   | 1    | 1     | 1  |    |      | 1 |   |   |   |   |   | 1      |   |   |   |        |         |     |   |
-| Instrucciones    | 2   | 2    | 2     | 2  | 2  |      | 2 |   |   |   |   |   | 2      |   |   |   | 2      | 2       | 2   |   |
-| Instruccion      | 5   | 5    | 5     | 5  | 12 |      | 12|   | 5 |   |   |   | 5      |   |   |   | 5      | 5       | 5   |   |
-| Declaracion      | 6   | 6    | 6     | 6  |    |      |   |   |   |   |   |   |        |   |   |   |        |         |     |   |
-| TipoDato         | 6   | 6    | 6     | 6  |    |      |   |   |   |   |   |   |        |   |   |   |        |         |     |   |
-| Identificador    |     |      |       | 7  |    |      |   |   |   |   |   |   |        |   |   |   |        |         |     |   |
-| Asignacion       |     |      |       | 8  |    |      |   |   |   |   |   |   |        |   |   |   |        |         |     |   |
-| LlamadaFuncion   |     |      |       | 9  |    |      |   |   |   |   |   |   |        |   |   |   |        |         |     |   |
-| Argumentos       | 16  | 16   | 16    | 16 | 16 |      | 16|   | 16|   |   |   | 16     |   |   |   | 16     | 16      | 16  |   |
-| Argumentos'      | 11  | 11   | 11    | 11 | 11 |      | 11|   | 11|   |   |   | 11     |   |   |   | 11     | 11      | 11  | 11|
-| EstructuraControl|     |      |       |    | 12 | 13   |   |   |   |   |   |   |        |   |   |   |        |         |     |   |
-| ElseBloque       |     |      |       |    |    | 14   |   |   |   |   |   |   |        |   |   |   |        |         |     | 14|
-| BloqueCodigo     | 14  | 14   | 14    | 14 | 14 | 14   | 14|   | 14|   |   |   | 14     |   |   |   | 14     | 14      | 14  |   |
-| Impresion        |     |      |       |    |    |      |   |   |   |   |   |   | 15     |   |   |   |        |         |     |   |
-| Expresion        | 17  | 17   | 17    | 17 |    |      |   |   | 17|   |   |   | 17     |   |   |   | 17     | 17      | 17  |   |
-| Termino          |     |      |       | 17 |    |      |   |   | 17|   |   |   | 17     |   | 17|   | 17     | 17      | 17  |   |
-| Factor           | 18  | 18   | 18    | 18 |    |      |   |   | 18|   |   |   | 18     |   | 18|   | 18     | 18      | 18  |   |
-| Numero           | 19  | 19   | 19    | 19 |    |      |   |   | 19|   |   |   | 19     |   | 19|   | 19     | 19      |     |   |
-| Caracter         |     |      |       |    |    |      |   |   |   |   |   |   |        |   |   |   |        |         | 20  |   |
-
-
-'''
+miParser()
