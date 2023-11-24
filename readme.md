@@ -47,88 +47,82 @@ P: Conjunto de reglas de producción
 S: Símbolo inicial
    S = 0
 
-S → preprocessor_directive D
-D → int identificador LPAREN int identificador coma int identificador RPAREN inicioBloque U finBloque X
-U → keyword identificador PLUS identificador finInstruccion
-X → keyword identificador LPAREN int identificador coma int identificador RPAREN inicioBloque V finBloque V
-V → keyword LPAREN identificador greater_than identificador RPAREN inicioBloque W finBloque Z finBloque Q
-W → identificador LPAREN cadena coma identificador coma identificador RPAREN finInstruccion
-Z → keyword inicioBloque B finBloque
-B → identificador LPAREN cadena coma identificador coma identificador RPAREN finInstruccion
-Q → int identificador LPAREN RPAREN inicioBloque M C F CO I P CO IM R FIN
-M → int identificador asignacion NUMBER finInstruccion
-C → keyword identificador asignacion single_quote identificador single_quote finInstruccion
-F → float identificador asignacion NUMBER dot NUMBER finInstruccion
-CO → comentario
-I → int identificador asignacion identificador LPAREN identificador coma NUMBER RPAREN finInstruccion
-P → identificador LPAREN cadena coma identificador RPAREN finInstruccion
-IM → identificador LPAREN NUMBER coma identificador RPAREN finInstruccion
-R → keyword NUMBER finInstruccion
-FIN → finBloque eof
+S -> preprocessor_directive F
+F -> int identificador LPAREN V coma V RPAREN inicioBloque R finBloque FV
+V -> int identificador
+R -> keyword SUM finInstruccion
+SUM -> identificador PLUS identificador
+FV -> keyword identificador LPAREN V coma V RPAREN inicioBloque IF finBloque M
+IF -> keyword LPAREN C RPAREN inicioBloque P finBloque E
+C -> identificador greater_than identificador
+P -> identificador LPAREN cadena coma identificador coma identificador RPAREN finInstruccion
+E -> keyword inicioBloque P finBloque
+M -> int identificador LPAREN RPAREN inicioBloque VA VC VF COM VS P2 COM FI COM VA W RET finBloque
+VA -> int identificador asignacion NUMBER finInstruccion
+VC -> keyword identificador asignacion single_quote identificador single_quote finInstruccion
+VF -> float identificador asignacion NUMBER dot NUMBER finInstruccion
+VS -> int identificador asignacion identificador LPAREN identificador coma NUMBER RPAREN finInstruccion
+P2 -> identificador LPAREN cadena coma identificador RPAREN finInstruccion
+FI -> identificador LPAREN NUMBER coma identificador RPAREN finInstruccion
+W -> keyword LPAREN C2 RPAREN inicioBloque P2 WC finBloque
+WC -> identificador PLUS PLUS
+C2 -> identificador lesser_than NUMBER
+COM -> comentario
+RET -> keyword NUMBER finInstruccion
+FIN -> finBloque eof
+
 
 Conjuntos First
 
-First(S) = {preprocessor_directive}
-First(D) = {int}
-First(U) = {keyword}
-First(X) = {keyword}
-First(V) = {keyword}
-First(W) = {identificador}
-First(Z) = {keyword}
-First(B) = {identificador}
-First(Q) = {int}
-First(M) = {int}
-First(C) = {keyword}
-First(F) = {float}
-First(CO) = {comentario}
-First(I) = {int}
-First(P) = {identificador}
-First(IM) = {identificador}
-First(R) = {keyword}
-First(FIN) = {finBloque}
+FIRST(S) = {preprocessor_directive}
+FIRST(F) = {int}
+FIRST(V) = {int}
+FIRST(R) = {keyword}
+FIRST(SUM) = {identificador}
+FIRST(FV) = {keyword}
+FIRST(IF) = {keyword}
+FIRST(C) = {identificador}
+FIRST(P) = {identificador}
+FIRST(E) = {keyword}
+FIRST(M) = {int}
+FIRST(VA) = {int}
+FIRST(VC) = {keyword}
+FIRST(VF) = {float}
+FIRST(VS) = {int}
+FIRST(P2) = {identificador}
+FIRST(FI) = {identificador}
+FIRST(W) = {keyword}
+FIRST(WC) = {identificador}
+FIRST(C2) = {identificador}
+FIRST(COM) = {comentario}
+FIRST(RET) = {keyword}
+FIRST(FIN) = {finBloque}
 
 Conjuntos Follow
 
-Follow(S) = {eof}
-Follow(D) = {eof}
-Follow(U) = {finBloque}
-Follow(X) = {finBloque}
-Follow(V) = {finBloque}
-Follow(W) = {finBloque}
-Follow(Z) = {finBloque}
-Follow(B) = {finBloque}
-Follow(Q) = {finBloque}
-Follow(M) = {int, keyword, identificador, finBloque}
-Follow(C) = {int, keyword, identificador, finBloque}
-Follow(F) = {int, keyword, identificador, finBloque}
-Follow(CO) = {int, keyword, identificador, float, comentario, finBloque}
-Follow(I) = {int, keyword, identificador, finBloque}
-Follow(P) = {int, keyword, identificador, finBloque}
-Follow(IM) = {int, keyword, identificador, finBloque}
-Follow(R) = {int, keyword, identificador, finBloque}
-Follow(FIN) = {eof}
+FOLLOW(S) = {eof}
+FOLLOW(F) = {intBloque, eof}
+FOLLOW(V) = {RPAREN}
+FOLLOW(R) = {intBloque, eof}
+FOLLOW(SUM) = {finInstruccion}
+FOLLOW(FV) = {intBloque, eof}
+FOLLOW(IF) = {finInstruccion}
+FOLLOW(C) = {RPAREN}
+FOLLOW(P) = {finInstruccion}
+FOLLOW(E) = {intBloque, eof}
+FOLLOW(M) = {eof}
+FOLLOW(VA) = {finInstruccion}
+FOLLOW(VC) = {finInstruccion}
+FOLLOW(VF) = {finInstruccion}
+FOLLOW(VS) = {finInstruccion}
+FOLLOW(P2) = {finInstruccion}
+FOLLOW(FI) = {finInstruccion}
+FOLLOW(W) = {finBloque}
+FOLLOW(WC) = {finBloque}
+FOLLOW(C2) = {RPAREN}
+FOLLOW(COM) = {intBloque, eof}
+FOLLOW(RET) = {finBloque}
+FOLLOW(FIN) = {eof}
+
 
 Tabla LL1
-
-+--------------------------+--------------------------------------------------------------------------------------------+
-| No terminal / Terminal   | preprocessor_directive | int       | keyword   | identificador | LPAREN | RPAREN | inicioBloque | finBloque | PLUS | greater_than | cadena | coma | NUMBER | asignacion | single_quote | float    | dot  | comentario | eof | finInstruccion |
-+--------------------------+--------------------------------------------------------------------------------------------+
-| S                        | S -> preprocessor_directive D                                                         |                                                      |
-| D                        | D -> int identificador LPAREN int identificador coma int identificador RPAREN inicioBloque U finBloque X |                                                      |
-| U                        | U -> keyword identificador PLUS identificador finInstruccion                                |                                                      |
-| X                        | X -> keyword identificador LPAREN int identificador coma int identificador RPAREN inicioBloque V finBloque V |                                                      |
-| V                        | V -> keyword LPAREN identificador greater_than identificador RPAREN inicioBloque W finBloque Z finBloque Q |                                                      |
-| W                        | W -> identificador LPAREN cadena coma identificador coma identificador RPAREN finInstruccion |                                                      |
-| Z                        | Z -> keyword inicioBloque B finBloque                                                        |                                                      |
-| B                        | B -> identificador LPAREN cadena coma identificador coma identificador RPAREN finInstruccion |                                                      |
-| Q                        | Q -> int identificador LPAREN RPAREN inicioBloque M C F CO I P CO IM R FIN                    |                                                      |
-| M                        | M -> int identificador asignacion NUMBER finInstruccion                                    |                                                      |
-| C                        | C -> keyword identificador asignacion single_quote identificador single_quote finInstruccion |                                                      |
-| F                        | F -> float identificador asignacion NUMBER dot NUMBER finInstruccion                        |                                                      |
-| CO                       | CO -> comentario                                                                         |                                                      |
-| I                        | I -> int identificador asignacion identificador LPAREN identificador coma NUMBER RPAREN finInstruccion |                                                      |
-| P                        | P -> identificador LPAREN cadena coma identificador RPAREN finInstruccion                      |                                                      |
-| IM                       | IM -> identificador LPAREN NUMBER coma identificador RPAREN finInstruccion                  |                                                      |
-| R                        | R -> keyword NUMBER finInstruccion                                                         |                                                      |
-| FIN                      | FIN -> finBloque eof                                                                      |                                                      |
-+--------------------------+--------------------------------------------------------------------------------------------+
