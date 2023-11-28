@@ -24,6 +24,7 @@ tokens = (
     'int',
     'float',
     'greater_than',
+    'lesser_than',
     'single_quote',
     'dot',
     'eof'
@@ -105,6 +106,11 @@ def t_greater_than(t):
     return t
 
 
+def t_lesser_than(t):
+    r'<'
+    return t
+
+
 def t_single_quote(t):
     r'\''
     return t
@@ -146,65 +152,86 @@ code = """#include <stdio.h>
     
         // Llamando a la funcion imprimir_mayor
         imprimir_mayor(8, numero_entero);
+        
+        //Bucle while
+        int i = 0;
+        while(i<5){
+        printf("Iteración %d\n", i);
+        i++
+        }
     
         return 0;
         }$"""
 
+
+def print_tokens(lexer, code):
+    lexer.input(code)
+    while True:
+        token = lexer.token()
+        if not token:
+            break  # No more tokens
+        print(token)
+
+
 S = 0
-D = 1
-X = 2
-Y = 3
-Z = 4
-W = 5
-U = 6
-V = 7
-B = 8
-Q = 9
+F = 1
+V = 2
+R = 3
+SUM = 4
+FV = 5
+IF = 6
+C = 7
+P = 8
+E = 9
 M = 10
-C = 11
-F = 12
-CO = 13
-I = 14
-P = 15
-IM = 16
-R = 17
-FIN = 18
+VA = 11
+VC = 12
+VF = 13
+COM = 14
+VS = 15
+P2 = 16
+FI = 17
+W = 18
+C2 = 20
+WC = 21
+RET = 22
+FIN = 23
 tabla = [
-    [S, 'preprocessor_directive', ['preprocessor_directive', D]],
-    [D, 'int', ['int', 'identificador', 'LPAREN', 'int', 'identificador', 'coma', 'int', 'identificador', 'RPAREN',
-                'inicioBloque', U, 'finBloque', X]],
-    [U, 'keyword', ['keyword', 'identificador', 'PLUS', 'identificador', 'finInstruccion']],
-    [X, 'keyword',
-     ['keyword', 'identificador', 'LPAREN', 'int', 'identificador', 'coma', 'int', 'identificador', 'RPAREN',
-      'inicioBloque', V, 'finBloque', V]],
-    [V, 'keyword',
-     ['keyword', 'LPAREN', 'identificador', 'greater_than', 'identificador', 'RPAREN', 'inicioBloque', W, 'finBloque',
-      Z, 'finBloque', Q]],
-    [W, 'identificador',
+    [S, 'preprocessor_directive', ['preprocessor_directive', F]],
+    [F, 'int', ['int', 'identificador', 'LPAREN', V, 'coma', V, 'RPAREN', 'inicioBloque', R, 'finBloque', FV]],
+    [V, 'int', ['int', 'identificador']],
+    [R, 'keyword', ['keyword', SUM, 'finInstruccion']],
+    [SUM, 'identificador', ['identificador', 'PLUS', 'identificador']],
+    [FV, 'keyword', ['keyword', 'identificador', 'LPAREN', V, 'coma', V, 'RPAREN', 'inicioBloque', IF, 'finBloque', M]],
+    [IF, 'keyword', ['keyword', 'LPAREN', C, 'RPAREN', 'inicioBloque', P, 'finBloque', E]],
+    [C, 'identificador', ['identificador', 'greater_than', 'identificador']],
+    [P, 'identificador',
      ['identificador', 'LPAREN', 'cadena', 'coma', 'identificador', 'coma', 'identificador', 'RPAREN',
       'finInstruccion']],
-    [Z, 'keyword', ['keyword', 'inicioBloque', B, 'finBloque']],
-    [B, 'identificador',
-     ['identificador', 'LPAREN', 'cadena', 'coma', 'identificador', 'coma', 'identificador', 'RPAREN',
-      'finInstruccion']],
-    [Q, 'int', ['int', 'identificador', 'LPAREN', 'RPAREN', 'inicioBloque', M, C, F, CO, I, P, CO, IM, R, FIN]],
-    [M, 'int', ['int', 'identificador', 'asignacion', 'NUMBER', 'finInstruccion']],
-    [C, 'keyword',
+    [E, 'keyword', ['keyword', 'inicioBloque', P, 'finBloque']],
+    [M, 'int',
+     ['int', 'identificador', 'LPAREN', 'RPAREN', 'inicioBloque', VA, VC, VF, COM, VS, P2, COM, FI, COM, VA, W, RET,
+      'finBloque', ]],
+    [VA, 'int', ['int', 'identificador', 'asignacion', 'NUMBER', 'finInstruccion']],
+    [VC, 'keyword',
      ['keyword', 'identificador', 'asignacion', 'single_quote', 'identificador', 'single_quote', 'finInstruccion']],
-    [F, 'float', ['float', 'identificador', 'asignacion', 'NUMBER', 'dot', 'NUMBER', 'finInstruccion']],
-    [CO, 'comentario', ['comentario']],
-    [I, 'int',
+    [VF, 'float', ['float', 'identificador', 'asignacion', 'NUMBER', 'dot', 'NUMBER', 'finInstruccion']],
+    [VS, 'int',
      ['int', 'identificador', 'asignacion', 'identificador', 'LPAREN', 'identificador', 'coma', 'NUMBER', 'RPAREN',
       'finInstruccion']],
-    [P, 'identificador', ['identificador', 'LPAREN', 'cadena', 'coma', 'identificador', 'RPAREN', 'finInstruccion']],
-    [IM, 'identificador', ['identificador', 'LPAREN', 'NUMBER', 'coma', 'identificador', 'RPAREN', 'finInstruccion']],
-    [R, 'keyword', ['keyword', 'NUMBER', 'finInstruccion']],
+    [P2, 'identificador', ['identificador', 'LPAREN', 'cadena', 'coma', 'identificador', 'RPAREN', 'finInstruccion']],
+    [FI, 'identificador', ['identificador', 'LPAREN', 'NUMBER', 'coma', 'identificador', 'RPAREN', 'finInstruccion']],
+    [W, 'keyword', ['keyword', 'LPAREN', C2, 'RPAREN', 'inicioBloque', P2, WC, 'finBloque']],
+    [WC, 'identificador', ['identificador', 'PLUS', 'PLUS']],
+    [C2, 'identificador', ['identificador', 'lesser_than', 'NUMBER']],
+    [COM, 'comentario', ['comentario']],
+    [RET, 'keyword', ['keyword', 'NUMBER', 'finInstruccion']],
     [FIN, 'finBloque', ['finBloque', 'eof']]
 ]
 
 stack = ['eof', 0]
 
-#Inicialiación de lexer
+# Inicialiación de lexer
 lexer = lex.lex()
 
 
@@ -212,7 +239,6 @@ def miParser():
     # f = open('fuente.c','r')
     # lexer.input(f.read())
     lexer.input(code)
-
     tok = lexer.token()
     x = stack[-1]  # primer elemento de der a izq
     while True:
@@ -226,6 +252,7 @@ def miParser():
                 tok = lexer.token()
             if x in tokens and x != tok.type:
                 print("Error: se esperaba ", tok.type)
+                print("En posición:", tok.lexpos)
                 return 0;
             if x not in tokens:  # es no terminal
                 print("van entrar a la tabla:")
