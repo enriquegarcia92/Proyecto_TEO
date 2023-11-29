@@ -76,8 +76,11 @@ def t_keyword(t):
     return t
 
 
+# t.type está mal, también t.lexpos
 def t_identificador(t):
     r'([a-z]|[A-Z]|_)([a-z]|[A-Z]|\d|_)*'
+    insert_symbol(t.value, t.type, t.value, t.lineno, t.lexpos)
+    t.value = (t.value,)
     return t
 
 
@@ -163,6 +166,54 @@ code = """#include <stdio.h>
         return 0;
         }$"""
 
+# Inicialización de lexer
+lexer = lex.lex()
+
+# Inicialización de la tabla de símbolos
+symbol_table = {}
+
+
+# Función para insertar un símbolo en la tabla de símbolos
+def insert_symbol(identifier, symbol_type, value, line_number, scope):
+    if identifier not in symbol_table:
+        symbol_table[identifier] = {
+            'type': symbol_type,
+            'value': value,
+            'line_number': line_number,
+            'scope': scope
+        }
+    else:
+        print(f"Error: El símbolo '{identifier}' ya existe en la tabla de símbolos.")
+
+
+# Función para buscar un símbolo en la tabla de símbolos
+def search_symbol(identifier):
+    return symbol_table.get(identifier, None)
+
+
+# Función para actualizar un símbolo en la tabla de símbolos
+def update_symbol(identifier, symbol_type, value, line_number, scope):
+    print("=====================================")
+    print(symbol_table)
+    if identifier in symbol_table:
+        print("SE METIOO")
+        symbol_table[identifier] = {
+            'type': symbol_type,
+            'value': value,
+            'line_number': line_number,
+            'scope': scope
+        }
+    else:
+        print(f"Error: El símbolo '{identifier}' no existe en la tabla de símbolos.")
+
+
+# Función para eliminar un símbolo de la tabla de símbolos
+def delete_symbol(identifier):
+    if identifier in symbol_table:
+        del symbol_table[identifier]
+    else:
+        print(f"Error: El símbolo '{identifier}' no existe en la tabla de símbolos.")
+
 
 def print_tokens(lexer, code):
     lexer.input(code)
@@ -231,20 +282,16 @@ tabla = [
 
 stack = ['eof', 0]
 
-# Inicialiación de lexer
-lexer = lex.lex()
-
 
 def miParser():
-    # f = open('fuente.c','r')
-    # lexer.input(f.read())
+    global current_scope
     lexer.input(code)
     tok = lexer.token()
-    x = stack[-1]  # primer elemento de der a izq
+    x = stack[-1]
     while True:
         if x == tok.type and x == 'eof':
             print("Cadena reconocida exitosamente")
-            return  # aceptar
+            break
         else:
             if x == tok.type and x != 'eof':
                 stack.pop()
@@ -253,8 +300,8 @@ def miParser():
             if x in tokens and x != tok.type:
                 print("Error: se esperaba ", tok.type)
                 print("En posición:", tok.lexpos)
-                return 0;
-            if x not in tokens:  # es no terminal
+                return 0
+            if x not in tokens:
                 print("van entrar a la tabla:")
                 print(x)
                 print(tok.type)
@@ -262,23 +309,28 @@ def miParser():
                 if celda is None:
                     print("Error: NO se esperaba", tok.type)
                     print("En posición:", tok.lexpos)
-                    return 0;
+                    return 0
                 else:
                     stack.pop()
                     agregar_pila(celda)
                     print(stack)
                     print("------------")
                     x = stack[-1]
+    print("\nTabla de símbolos:")
+    for identifier, attributes in symbol_table.items():
+        print(
+            f"ID: {identifier}, Tipo: {attributes['type']}, Valor: {attributes['value']}, Línea: {attributes['line_number']}, Ámbito: {attributes['scope']}")
 
-                    # if not tok:
-            # break
+
+        # if not tok:
+        # break
         # print(tok)
         # print(tok.type, tok.value, tok.lineno, tok.lexpos)
 
 
 def buscar_en_tabla(no_terminal, terminal):
     for i in range(len(tabla)):
-        if (tabla[i][0] == no_terminal and tabla[i][1] == terminal):
+        if tabla[i][0] == no_terminal and tabla[i][1] == terminal:
             return tabla[i][2]  # retorno la celda
 
 
