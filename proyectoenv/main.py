@@ -328,12 +328,9 @@ tabla = [
     [RETURNCHAR, 'identificador', ['identificador', 'finInstruccion']],
     [RETURNCHAR, 'LPAREN', ['LPAREN', 'char', 'RPAREN', 'identificador', 'finInstruccion']],
     # Manejo de retornos para funciones INT
-    [RETURNNUM, 'identificador', ['identificador', FUNCUSE, ARITMETIC]],
+    [RETURNNUM, 'identificador', ['identificador', ARITMETIC]],
     [RETURNNUM, 'LPAREN', ['LPAREN', THANDLER, ARITMETIC]],
     [RETURNNUM, 'NUMBER', [FLOATN, ARITMETIC]],
-    #Manejo de uso de funciones
-    [FUNCUSE, 'LPAREN', ['LPAREN', USEPARAM, 'RPAREN', 'finInstruccion']],
-    [FUNCUSE, 'PLUS', []],
     # Manejo de operaciones aritmeticas basicas
     [ARITMETIC, 'LPAREN', ['LPAREN', THANDLER, ARITMETIC]],
     [ARITMETIC, 'RPAREN', ['RPAREN', ARITMETIC]],
@@ -341,6 +338,7 @@ tabla = [
     [ARITMETIC, 'MINUS', ['MINUS', GHANDLER, ARITMETIC]],
     [ARITMETIC, 'TIMES', ['TIMES', GHANDLER, ARITMETIC]],
     [ARITMETIC, 'DIVIDE', ['DIVIDE', GHANDLER, ARITMETIC]],
+    [ARITMETIC, 'coma', ['coma', THANDLER, ARITMETIC]],
     [ARITMETIC, 'finInstruccion', ['finInstruccion']],
     # Manejador de parentesis en operacioens aritmeticas
     [GHANDLER, 'identificador', ['identificador']],
