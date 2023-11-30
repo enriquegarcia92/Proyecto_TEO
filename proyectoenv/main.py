@@ -1,5 +1,11 @@
 import ply.lex as lex
 
+# Variable para llevar el seguimiento del ámbito global
+current_scope = 0
+
+# Inicialización de la tabla de símbolos
+symbol_table = {}
+
 # Nombre de tokens
 tokens = (
     'NUMBER',
@@ -37,8 +43,8 @@ t_TIMES = r'\*'
 t_DIVIDE = r'/'
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
-t_inicioBloque = r'\{'
-t_finBloque = r'\}'
+# t_inicioBloque = r'\{'
+# t_finBloque = r'\}'
 t_finInstruccion = r'\;'
 t_asignacion = r'\='
 t_coma = r'\,'
@@ -47,6 +53,21 @@ t_eof = r'\$'
 
 
 # Reglas de tokens, expersiones regulares
+
+def t_inicioBloque(t):
+    r'\{'
+    global current_scope
+    current_scope += 1
+    return t
+
+
+def t_finBloque(t):
+    r'\}'
+    global current_scope
+    current_scope -= 1
+    return t
+
+
 def t_int(t):
     r'(int)'
     return t
@@ -76,10 +97,10 @@ def t_keyword(t):
     return t
 
 
-# t.type está mal, también t.lexpos
 def t_identificador(t):
     r'([a-z]|[A-Z]|_)([a-z]|[A-Z]|\d|_)*'
-    insert_symbol(t.value, t.type, t.value, t.lineno, t.lexpos)
+    t.tipo = 'identificador'  # Agrega la propiedad 'tipo' al token
+    insert_symbol(t.value, t.tipo, t.value, t.lineno, current_scope)
     t.value = (t.value,)
     return t
 
@@ -129,6 +150,61 @@ def t_error(t):
     t.lexer.skip(1)
 
 
+# Función para insertar un símbolo en la tabla de símbolos
+def insert_symbol(identifier, symbol_type, value, line_number, scope):
+    if identifier not in symbol_table:
+        symbol_table[identifier] = {
+            'type': symbol_type,
+            'value': value,
+            'line_number': line_number,
+            'scope': scope
+        }
+    else:
+        print(f"Error: El símbolo '{identifier}' ya existe en la tabla de símbolos.")
+        # Actualizar solo el tipo y el ámbito, manteniendo el valor existente
+        update_symbol(identifier, symbol_type, symbol_table[identifier]['value'], line_number, scope)
+
+
+# Función para buscar un símbolo en la tabla de símbolos
+def search_symbol(identifier):
+    return symbol_table.get(identifier, None)
+
+
+# Función para actualizar un símbolo en la tabla de símbolos con el nuevo ámbito
+def update_symbol(identifier, symbol_type, value, line_number, scope):
+    if identifier in symbol_table:
+        symbol_table[identifier] = {
+            'type': symbol_type,
+            'value': value,
+            'line_number': line_number,
+            'scope': scope
+        }
+    else:
+        print(f"Error: El símbolo '{identifier}' no existe en la tabla de símbolos.")
+
+
+# Función para eliminar un símbolo de la tabla de símbolos
+def delete_symbol(identifier):
+    if identifier in symbol_table:
+        del symbol_table[identifier]
+    else:
+        print(f"Error: El símbolo '{identifier}' no existe en la tabla de símbolos.")
+
+
+# Función para imprimir la tabla de símbolos
+def print_symbol_table():
+    print("\nTabla de símbolos:")
+    for identifier, attributes in symbol_table.items():
+        print(
+              f"ID: {identifier}, Tipo: {attributes['type']}, Valor: {attributes['value']}, Línea: {attributes['line_number']}, Ámbito: {attributes['scope']}")
+    print("----------------")
+    print("\n")
+
+
+# Inicialización de lexer
+lexer = lex.lex()
+
+
 # código de ejemplo a utilizar
 code = """#include <stdio.h>
     
@@ -166,58 +242,11 @@ code = """#include <stdio.h>
         return 0;
         }$"""
 
-# Inicialización de lexer
-lexer = lex.lex()
-
-# Inicialización de la tabla de símbolos
-symbol_table = {}
 
 # Se declara el diccionario de datos (Tabla Hash)
 myDict = {}
 # Se declara el arreglo de errores
 errors = []
-
-
-# Función para insertar un símbolo en la tabla de símbolos
-def insert_symbol(identifier, symbol_type, value, line_number, scope):
-    if identifier not in symbol_table:
-        symbol_table[identifier] = {
-            'type': symbol_type,
-            'value': value,
-            'line_number': line_number,
-            'scope': scope
-        }
-    else:
-        print(f"Error: El símbolo '{identifier}' ya existe en la tabla de símbolos.")
-
-
-# Función para buscar un símbolo en la tabla de símbolos
-def search_symbol(identifier):
-    return symbol_table.get(identifier, None)
-
-
-# Función para actualizar un símbolo en la tabla de símbolos
-def update_symbol(identifier, symbol_type, value, line_number, scope):
-    print("=====================================")
-    print(symbol_table)
-    if identifier in symbol_table:
-        print("SE METIOO")
-        symbol_table[identifier] = {
-            'type': symbol_type,
-            'value': value,
-            'line_number': line_number,
-            'scope': scope
-        }
-    else:
-        print(f"Error: El símbolo '{identifier}' no existe en la tabla de símbolos.")
-
-
-# Función para eliminar un símbolo de la tabla de símbolos
-def delete_symbol(identifier):
-    if identifier in symbol_table:
-        del symbol_table[identifier]
-    else:
-        print(f"Error: El símbolo '{identifier}' no existe en la tabla de símbolos.")
 
 
 def print_tokens(lexer, code):
@@ -350,12 +379,6 @@ def miParser():
                     print(stack)
                     print("------------")
                     x = stack[-1]
-    print("\nTabla de símbolos:")
-    for identifier, attributes in symbol_table.items():
-        print(
-            f"ID: {identifier}, Tipo: {attributes['type']}, Valor: {attributes['value']}, Línea: {attributes['line_number']}, Ámbito: {attributes['scope']}")
-    print("----------------")
-    print("\n")
         # if not tok:
         # break
         # print(tok)
@@ -375,6 +398,10 @@ def agregar_pila(produccion):
 
 
 miParser()
+
+
+# Impresión de la tabla de símbolos
+print_symbol_table()
 
 # Imprimir valores del diccionario de datos
 print("Diccionario de palabras")
