@@ -4,7 +4,6 @@ import ply.lex as lex
 tokens = (
     'aumentarvar',
     'reducirvar',
-    'libcall',
     'NUMBER',
     'PLUS',
     'MINUS',
@@ -104,14 +103,9 @@ def t_reducirvar(t):
     return t
 
 
-def t_libcall(t):
-    r'\<([a-zA-Z_][a-zA-Z0-9_]*)\>'
-    t.value = t.value[1:-1]  # Extract the identifier part
-    return t
-
-
 def t_int(t):
     r'(int)'
+    tabla_simbolos.insertar(t.value, t.type, t.value, t.lineno, 'global')
     return t
 
 
@@ -157,6 +151,7 @@ def t_char(t):
 
 def t_float(t):
     r'(float)'
+    tabla_simbolos.insertar(t.value, t.type, t.value, t.lineno, 'global')
     return t
 
 
@@ -168,11 +163,13 @@ def t_printf(t):
 def t_NUMBER(t):
     r'\d+'
     t.value = int(t.value)
+    tabla_simbolos.insertar(t.value, t.type, t.value, t.lineno, 'global')
     return t
 
 
 def t_keyword(t):
     r'(char|return|do|while|for|void)'
+    tabla_simbolos.insertar(t.value, t.type, t.value, t.lineno, 'global')
     return t
 
 
@@ -193,6 +190,7 @@ t_ignore = ' \t'
 
 def t_cadena(t):
     r'\"[^\"]*\"'
+    tabla_simbolos.insertar(t.value, t.type, t.value, t.lineno, 'global')
     return t
 
 
