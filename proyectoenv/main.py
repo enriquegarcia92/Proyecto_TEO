@@ -454,18 +454,6 @@ stack = ['eof', 0]
 # Inicialiación de lexer
 lexer = lex.lex()
 
-# Se declara el diccionario de datos (Tabla Hash)
-myDict = {}
-# Se declara el arreglo de errores
-errors = []
-
-
-# Función de para construir las llaves del HashMap
-def get_hash(key):
-    h = 20
-    for char in key:
-        h += ord(char)
-    return h % 100
 
 
 def miParser():
@@ -499,37 +487,11 @@ def miParser():
             return  # aceptar
         else:
             if x == tok.type and x != 'eof':
-                hashKey = get_hash(hashWord)
-                hashWord += "1"
-                if tok.type != "error":
-                    auxDict = {
-                        hashKey: {"Type": tok.type, "Token": tok.value, "Line": tok.lineno, "Position": tok.lexpos,
-                                  "TypeValue": type(tok.value)}}
-                    print(auxDict)
-                    myDict.update(auxDict)
                 stack.pop()
                 x = stack[-1]
                 tok = lexer.token()
-        if x in tokens and x != tok.type:
-            print("Error: se esperaba ", tok.type)
-            print("En posición:", tok.lexpos)
-            # Panic Mode - Manejador de Errores
-            errors.append({"Error": "Se encontro un error de tipo " + tok.type + " en la linea " + str(tok.lineno) + " se obtuvo: " + '"' + tok.value + '"'})
-            while True:
-                tok = lexer.token()
-                if tok is None:
-                    break
-                if tok.type == x:
-                    break
-            if tok is None:
-                break
-        if x not in tokens:  # es no terminal
-            print("van entrar a la tabla:")
-            print(x)
-            print(tok.type)
-            celda = buscar_en_tabla(x, tok.type)
-            if celda is None:
-                print("Error: NO se esperaba", tok.type)
+            if x in tokens and x != tok.type:
+                print("Error: se esperaba ", tok.type)
                 print("En posición:", tok.lexpos)
                 return 0
             if x not in tokens:  # es no terminal
@@ -562,58 +524,3 @@ def agregar_pila(produccion):
 
 
 miParser()
-
-# Imprimir valores del diccionario de datos
-print("Key", "\t", "Value")
-for key, value in myDict.items():
-    print(key, "\t", value)
-
-print("----------------")
-
-semanticHash = []
-
-
-def findVariableDeclarations():
-    hashedList = list(myDict.values())
-    n = len(hashedList)
-    for i in range(0, n):
-        if (hashedList[i]['Token'] == 'int' or hashedList[i]['Token'] == 'float') and hashedList[i + 2]["Token"] == '=':
-            semanticHash.append(
-                {"Type": hashedList[i]['Token'], "Value": hashedList[i + 3]['Token'], 'Line': hashedList[i]['Line']})
-
-        if hashedList[i]['Token'] == 'if' and hashedList[i + 2]['Type'] == 'identifier':
-            semanticHash.append(
-                {"Type": hashedList[i]['Token'], 'Value': hashedList[i + 2]['Type'], 'Line': hashedList[i]['Line']})
-
-
-def checkVariableDeclarations():
-    for i in semanticHash:
-        if (i['Type'] == 'int') and type(i['Value']) != int:
-            print("Error semántico: Declaracion de variable Int se espera un entero en la linea ", i['Line'],
-                  "se obtuvo:", '"', i['Value'], '"')
-
-        if (i['Type'] == 'if') and i['Value'] == 'identifier':
-            print("Error semántico: Tipos no Compatibles en la linea ", i['Line'])
-
-        if (i['Type'] == 'float') and type(i['Value']) != float:
-            print("Error semántico: Declaracion de variable Float se espera un flotante en la linea ", i['Line'],
-                  "se obtuvo:", '"', i['Value'], '"')
-
-    print("\n")
-
-
-def checkErrors():
-    if len(errors) > 0:
-        for i in errors:
-            print("Error sintactico: ", i['Error'])
-    else:
-        print("No se encontraron errores")
-
-
-def miAnalizadorSemantico():
-    findVariableDeclarations()
-    checkVariableDeclarations()
-    checkErrors()
-
-
-miAnalizadorSemantico()
