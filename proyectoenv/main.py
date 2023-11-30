@@ -255,6 +255,7 @@ ELSEXTENTION = 28
 PRINTCONT = 29
 FUNCUSE = 30
 USEPARAM = 31
+EMPTYVAR = 31
 tabla = [
     [S, 'hashtoken', ['hashtoken', 'identificador', 'lesser_than', LIB]],
     # Manejo de variables globales
@@ -270,11 +271,15 @@ tabla = [
     # Manejar global scope de numericas
     [OPENNUMFUN, 'asignacion', ['asignacion', RETURNNUM, S]],
     [OPENNUMFUN, 'LPAREN', ['LPAREN', PARAM, FBODY, NUMRETURN, 'finBloque']],
+    [OPENNUMFUN, 'finInstruccion', ['finInstruccion',S]],
+    #Variables sin inicializar
+    [EMPTYVAR, 'asignacion', ['asignacion']],
+    [EMPTYVAR, 'finInstrucción', ['finInstrucción', FBODY]],
     # cuerpo de funciones int
     [FBODY, 'comentario', ['comentario', FBODY]],
-    [FBODY, 'int', ['int', 'identificador', 'asignacion', RETURNNUM, FBODY]],
-    [FBODY, 'float', ['float', 'identificador', 'asignacion', RETURNNUM, FBODY]],
-    [FBODY, 'char', ['char', 'identificador', 'asignacion', RETURNCHAR, FBODY]],
+    [FBODY, 'int', ['int', 'identificador', EMPTYVAR, RETURNNUM, FBODY]],
+    [FBODY, 'float', ['float', 'identificador', EMPTYVAR, RETURNNUM, FBODY]],
+    [FBODY, 'char', ['char', 'identificador', EMPTYVAR, RETURNCHAR, FBODY]],
     [FBODY, 'identificador', ['identificador', 'LPAREN', USEPARAM, 'RPAREN', 'finInstruccion', FBODY]],
     [FBODY, 'if', ['if', 'LPAREN', CONDITIONSHANDLER, 'RPAREN', 'inicioBloque', FBODY, 'finBloque', FBODY]],
     [FBODY, 'while', ['while', 'LPAREN', CONDITIONSHANDLER, 'RPAREN', 'inicioBloque', FBODY, 'finBloque', FBODY]],
@@ -311,6 +316,7 @@ tabla = [
     # Manejar global scope de char
     [OPENCHARFUN, 'asignacion', ['asignacion', RETURNCHAR, S]],
     [OPENCHARFUN, 'LPAREN', ['LPAREN', PARAM, CHARFRETURN, 'finBloque']],
+    [OPENNUMFUN, 'finInstruccion', ['finInstruccion', S]],
     # Manejo de retornos de funcion char
     [VOIDRETURN, 'keyword', ['keyword', RETURNVOID]],
     [VOIDRETURN, 'finBloque', []],
@@ -439,37 +445,3 @@ def agregar_pila(produccion):
 
 
 miParser()
-
-''' int suma(int a, int b) 
-            return a + b;
-        }
-        
-        void imprimir_mayor(int x, int y) {
-        if (x > y) {
-            printf("El número %d es mayor que %d\n", x, y);
-        } else {
-            printf("El número %d es menor o igual que %d\n", x, y);
-        }
-        }
-        
-        int main() {
-        int numero_entero = 10;
-        char caracter = 'A';
-        float numero_flotante = 5.5;
-    
-        // Llamando a la función suma
-        int resultado = suma(numero_entero, 20);
-        printf("El resultado de la suma es: %d\n", resultado);
-    
-        // Llamando a la funcion imprimir_mayor
-        imprimir_mayor(8, numero_entero);
-        
-        //Bucle while
-        int i = 0;
-        while(i<5){
-        printf("Iteración %d\n", i);
-        i++
-        }
-    
-        return 0;
-        }'''
