@@ -57,14 +57,52 @@ t_eof = r'\$'
 t_hashtoken = r'\#'
 
 
+# Clase para la tabla de símbolos
+class TablaSimbolos:
+    def __init__(self):
+        self.simbolos = {}
+
+    def insertar(self, identificador, tipo, valor, linea, ambito):
+        self.simbolos[identificador] = {'tipo': tipo, 'valor': valor, 'linea': linea, 'ambito': ambito}
+
+    def buscar(self, identificador):
+        return self.simbolos.get(identificador, None)
+
+    def actualizar(self, identificador, valor):
+        if identificador in self.simbolos:
+            self.simbolos[identificador]['valor'] = valor
+
+    def eliminar(self, identificador):
+        if identificador in self.simbolos:
+            del self.simbolos[identificador]
+
+    def imprimir_tabla(self):
+        print("\nTabla de Símbolos:")
+        print("{:<15} | {:<10} | {:<10} | {:<10} | {:<10}".format("Identificador", "Tipo", "Valor", "Línea", "Ámbito"))
+        print("------------------------------------------------------")
+        for identificador, info in self.simbolos.items():
+            tipo = info['tipo']
+            valor = info['valor']
+            linea = info['linea']
+            ambito_nivel = info['ambito']
+            ambito = 'global' if ambito_nivel == 0 else ('metodo/funcion' if ambito_nivel == 1 else 'instruccion')
+            print("{:<15} | {:<10} | {:<10} | {:<10} | {:<10}".format(identificador, tipo, valor, linea, ambito))
+
+
+# Crear instancia de la tabla de símbolos
+tabla_simbolos = TablaSimbolos()
+
+
 # Reglas de tokens, expersiones regulares
 def t_aumentarvar(t):
     r'([a-z]|[A-Z]|_)([a-z]|[A-Z]|\d|_)*\+\+'
     return t
 
+
 def t_reducirvar(t):
     r'([a-z]|[A-Z]|_)([a-z]|[A-Z]|\d|_)*\-\-'
     return t
+
 
 def t_libcall(t):
     r'\<([a-zA-Z_][a-zA-Z0-9_]*)\>'
@@ -76,9 +114,11 @@ def t_int(t):
     r'(int)'
     return t
 
+
 def t_while(t):
     r'(while)'
     return t
+
 
 def t_or(t):
     r'\|\|'
@@ -138,6 +178,8 @@ def t_keyword(t):
 
 def t_identificador(t):
     r'([a-z]|[A-Z]|_)([a-z]|[A-Z]|\d|_)*'
+    # Almacenar en la tabla de símbolos
+    tabla_simbolos.insertar(t.value, t.type, t.value, t.lineno, 'global')
     return t
 
 
@@ -194,7 +236,7 @@ code = """#include <stdio.h>
         int suma(int a, int b){
         return a+b;
         }
-        
+
         void imprimir_mayor(int x, int y) {
         if (x > y) {
             printf("El número %d es mayor que %d\n", x, y);
@@ -202,19 +244,19 @@ code = """#include <stdio.h>
             printf("El número %d es menor o igual que %d\n", x, y);
         }
         }
-        
+
         int main(){
         int numero_entero = 10;
         char caracter = 'A';
         float numero_flotante = 5.5;
-        
+
          // Llamando a la función suma
         int resultado = suma(numero_entero,s);
         printf("El resultado de la suma es: %d\n", resultado);
-    
+
         // Llamando a la funcion imprimir_mayor
         imprimir_mayor(8, numero_entero);
-        
+
         //Bucle while
         int i = 0;
         while(i<5){
@@ -223,7 +265,7 @@ code = """#include <stdio.h>
         }
         return 0;
         }
-        
+
         $"""
 
 S = 0
@@ -265,14 +307,14 @@ tabla = [
     [S, 'float', ['float', 'identificador', OPENNUMFUN, S]],
     [S, 'keyword', ['keyword', 'identificador', OPENVOID, S]],
     [S, 'comentario', ['comentario', S]],
-    [S, 'identificador', ['identificador','LPAREN', USEPARAM, 'RPAREN', 'finInstruccion', S]],
+    [S, 'identificador', ['identificador', 'LPAREN', USEPARAM, 'RPAREN', 'finInstruccion', S]],
     # Manejo de funcion void
     [OPENVOID, 'LPAREN', ['LPAREN', PARAM, FBODY, VOIDRETURN, 'finBloque']],
     # Manejar global scope de numericas
     [OPENNUMFUN, 'asignacion', ['asignacion', RETURNNUM, S]],
     [OPENNUMFUN, 'LPAREN', ['LPAREN', PARAM, FBODY, NUMRETURN, 'finBloque']],
-    [OPENNUMFUN, 'finInstruccion', ['finInstruccion',S]],
-    #Variables sin inicializar
+    [OPENNUMFUN, 'finInstruccion', ['finInstruccion', S]],
+    # Variables sin inicializar
     [EMPTYVAR, 'asignacion', ['asignacion']],
     [EMPTYVAR, 'finInstrucción', ['finInstrucción', FBODY]],
     # cuerpo de funciones int
@@ -285,17 +327,17 @@ tabla = [
     [FBODY, 'while', ['while', 'LPAREN', CONDITIONSHANDLER, 'RPAREN', 'inicioBloque', FBODY, 'finBloque', FBODY]],
     [FBODY, 'else', ['else', ELSEXTENTION]],
     [FBODY, 'printf', ['printf', 'LPAREN', PRINTCONT, 'RPAREN', 'finInstruccion', FBODY]],
-    [FBODY, 'aumentarvar',['aumentarvar','finInstruccion', FBODY]],
-    [FBODY, 'reducirvar', ['reducirvar','finInstruccion', FBODY]],
+    [FBODY, 'aumentarvar', ['aumentarvar', 'finInstruccion', FBODY]],
+    [FBODY, 'reducirvar', ['reducirvar', 'finInstruccion', FBODY]],
     [FBODY, 'keyword', []],
     [FBODY, 'finBloque', []],
-    #Manejo de estrucutra print
+    # Manejo de estrucutra print
     [PRINTCONT, 'cadena', [THANDLER, PRINTCONT]],
-    [PRINTCONT, 'identificador', [THANDLER,PRINTCONT]],
-    [PRINTCONT, 'NUMBER', [THANDLER,PRINTCONT]],
-    [PRINTCONT, 'coma', ['coma', PRINTCONT,PRINTCONT]],
+    [PRINTCONT, 'identificador', [THANDLER, PRINTCONT]],
+    [PRINTCONT, 'NUMBER', [THANDLER, PRINTCONT]],
+    [PRINTCONT, 'coma', ['coma', PRINTCONT, PRINTCONT]],
     [PRINTCONT, 'RPAREN', []],
-        # Manejo de else
+    # Manejo de else
     [ELSEXTENTION, 'inicioBloque', ['inicioBloque', FBODY, 'finBloque', FBODY]],
     [ELSEXTENTION, 'if', [FBODY]],
     # Manejo de condicionales de if
@@ -360,7 +402,7 @@ tabla = [
     [PARAM, 'float', ['float', 'identificador', PARAM]],
     [PARAM, 'RPAREN', ['RPAREN', 'inicioBloque']],
     [PARAM, 'coma', ['coma', PARAM]],
-    #Manejar uso de parametros en funciones
+    # Manejar uso de parametros en funciones
     [USEPARAM, 'identificador', ['identificador', USEPARAM]],
     [USEPARAM, 'NUMBER', [FLOATN, USEPARAM]],
     [USEPARAM, 'single_quote', ['single_quote', 'identificador', 'single_quote', USEPARAM]],
@@ -391,15 +433,13 @@ lexer = lex.lex()
 
 
 def miParser():
-    # f = open('fuente.c','r')
-    # lexer.input(f.read())
-
     lexer.input(code)
     tok = lexer.token()
     x = stack[-1]  # primer elemento de der a izq
     while True:
         if x == tok.type and x == 'eof':
             print("Cadena reconocida exitosamente")
+            tabla_simbolos.imprimir_tabla()  # Imprimir tabla de símbolos al final
             return  # aceptar
         else:
             if x == tok.type and x != 'eof':
@@ -409,7 +449,7 @@ def miParser():
             if x in tokens and x != tok.type:
                 print("Error: se esperaba ", tok.type)
                 print("En posición:", tok.lexpos)
-                return 0;
+                return 0
             if x not in tokens:  # es no terminal
                 print("van entrar a la tabla:")
                 print(x)
@@ -418,7 +458,7 @@ def miParser():
                 if celda is None:
                     print("Error: NO se esperaba", tok.type)
                     print("En posición:", tok.lexpos)
-                    return 0;
+                    return 0
                 else:
                     stack.pop()
                     agregar_pila(celda)
@@ -426,15 +466,10 @@ def miParser():
                     print("------------")
                     x = stack[-1]
 
-                    # if not tok:
-            # break
-        # print(tok)
-        # print(tok.type, tok.value, tok.lineno, tok.lexpos)
-
 
 def buscar_en_tabla(no_terminal, terminal):
     for i in range(len(tabla)):
-        if (tabla[i][0] == no_terminal and tabla[i][1] == terminal):
+        if tabla[i][0] == no_terminal and tabla[i][1] == terminal:
             return tabla[i][2]  # retorno la celda
 
 
