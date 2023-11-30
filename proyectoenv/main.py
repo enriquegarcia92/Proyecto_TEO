@@ -63,7 +63,8 @@ class TablaSimbolos:
         self.simbolos = {}
 
     def insertar(self, identificador, tipo, valor, linea, ambito):
-        self.simbolos[identificador] = {'tipo': tipo, 'valor': valor, 'linea': linea, 'ambito': ambito}
+        if identificador not in self.simbolos:
+            self.simbolos[identificador] = {'tipo': tipo, 'valor': valor, 'linea': linea, 'ambito': ambito}
 
     def buscar(self, identificador):
         return self.simbolos.get(identificador, None)
@@ -178,8 +179,6 @@ def t_keyword(t):
 
 def t_identificador(t):
     r'([a-z]|[A-Z]|_)([a-z]|[A-Z]|\d|_)*'
-    # Almacenar en la tabla de símbolos
-    tabla_simbolos.insertar(t.value, t.type, t.value, t.lineno, 'global')
     return t
 
 
@@ -436,7 +435,27 @@ def miParser():
     lexer.input(code)
     tok = lexer.token()
     x = stack[-1]  # primer elemento de der a izq
+    current_var_type = None
+    scope = 0
     while True:
+        # Manejo de tabla de simbolos
+        if tok.type == 'int':
+            current_var_type = 'int'
+        if tok.type == 'char':
+            current_var_type = 'char'
+        if tok.type == 'float':
+            current_var_type = 'float'
+        if tok.type == 'inicioBloque':
+            scope = 1
+        if tok.type == 'finBloque':
+            scope = 0
+        if tok.type == 'identificador':
+            if current_var_type is not None:
+                tabla_simbolos.insertar(tok.value, current_var_type, tok.value, tok.lineno, scope)
+                current_var_type = None
+            elif current_var_type is None:
+                tabla_simbolos.insertar(tok.value, tok.type, tok.value, tok.lineno, scope)
+        # Parseo
         if x == tok.type and x == 'eof':
             print("Cadena reconocida exitosamente")
             tabla_simbolos.imprimir_tabla()  # Imprimir tabla de símbolos al final
