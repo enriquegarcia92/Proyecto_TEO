@@ -2,7 +2,6 @@ import ply.lex as lex
 import symbolTable as TablaSimbolos
 import parsingTable as tabla
 
-
 # Nombre de tokens
 tokens = (
     "aumentarvar",
@@ -58,7 +57,6 @@ t_asignacion = r"\="
 t_coma = r"\,"
 t_eof = r"\$"
 t_hashtoken = r"\#"
-
 
 # Crear instancia de la tabla de símbolos
 tabla_simbolos = TablaSimbolos.TablaSimbolos()
@@ -213,8 +211,16 @@ stack = ["eof", 0]
 lexer = lex.lex()
 
 
+def find_expected_tokens(no_terminal):
+    expected = []
+    for row in tabla.tabla:
+        if row[0] == no_terminal and row[2] is not None:
+            expected.append(row[1])
+    return expected
+
+
 def miParser():
-    filename = "proyectoenv/example.c"
+    filename = "../proyectoenv/example.c"
     code = readSourceCodeFromFile(filename)
     lexer.input(code)
     tok = lexer.token()
@@ -254,24 +260,71 @@ def miParser():
                 x = stack[-1]
                 tok = lexer.token()
             if x in tokens and x != tok.type:
-                print("Error: se esperaba ", tok.type)
+                print("Error detectado")
+                print("Error: se esperaba", x)
+                expected_tokens = find_expected_tokens(x)
+                print("Error: se esperaba uno de", expected_tokens, "pero se encontró", tok.type)
                 print("En posición:", tok.lexpos)
-                return 0
+                print("En linea:", tok.lineno)
+                tok = panic_mode_recovery(expected_tokens, tok)
+                if tok is None or tok.type == 'eof':
+                    print("No se pudo recuperar del error.")
+                    return 0
+                # Reanuda el análisis después de la recuperación
+                x = stack[-1]
+                continue
             if x not in tokens:  # es no terminal
                 print("van entrar a la tabla:")
                 print(x)
                 print(tok.type)
                 celda = buscar_en_tabla(x, tok.type)
+                # Manejo de Errores y Recuperación
                 if celda is None:
-                    print("Error: NO se esperaba", tok.type)
+                    print("Error detectado")
+                    expected_tokens = find_expected_tokens(x)
+                    print("Error: se esperaba uno de", expected_tokens[0], "pero se encontró", tok.type)
                     print("En posición:", tok.lexpos)
-                    return 0
+                    print("En linea:", tok.lineno)
+                    print("celda: ", celda)
+                    tok = panic_mode_recovery(expected_tokens, tok)
+                    if tok is None or tok.type == 'eof':
+                        print("No se pudo recuperar del error.")
+                        return 0
+                    # Reanuda el análisis después de la recuperación
+                    x = stack[-1]
+                    continue
                 else:
                     stack.pop()
                     agregar_pila(celda)
                     print(stack)
-                    print("------------")
+                    print("/------------------------------------------------------------------------------/")
                     x = stack[-1]
+
+
+# def barra_de_progreso(duracion, longitud_barra=50):
+#     for i in range(longitud_barra + 1):
+#         porcentaje = int((i / longitud_barra) * 100)
+#         barra = '#' * i + '-' * (longitud_barra - i)
+#         sys.stdout.write(f"\r[{barra}] {porcentaje}%")
+#         sys.stdout.flush()
+#         time.sleep(duracion / longitud_barra)
+#     print()
+
+def panic_mode_recovery(recovery_tokens, tok):
+    # Bucles que buscan un token de recuperacion y ajustan la pila.
+    while tok is not None and tok.type not in recovery_tokens:
+        tok = lexer.token()
+    while stack and (stack[-1] not in recovery_tokens and stack[-1] in tokens):
+        stack.pop()
+
+    if stack and tok is not None:
+        # barra_de_progreso(2)
+        print(f"Recuperación exitosa, próximo token: {tok.type}, próximo en la pila: {stack[-1]}")
+        return tok
+    else:
+        # barra_de_progreso(2)
+        print("La pila está vacía después de la recuperación del modo pánico.")
+        return tok
 
 
 def buscar_en_tabla(no_terminal, terminal):
