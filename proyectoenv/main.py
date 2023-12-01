@@ -211,7 +211,7 @@ stack = ["eof", 0]
 lexer = lex.lex()
 
 
-def find_expected_tokens(no_terminal):
+def buscar_token_esperado(no_terminal):
     expected = []
     for row in tabla.tabla:
         if row[0] == no_terminal and row[2] is not None:
@@ -261,10 +261,10 @@ def miParser():
                 tok = lexer.token()
             if x in tokens and x != tok.type:
                 print("Error detectado")
-                print("Error: se esperaba", x)
-                expected_tokens = find_expected_tokens(x)
+                expected_tokens = buscar_token_esperado(x)
+                if len(expected_tokens) == 0:
+                    expected_tokens = ['hashToken', 'int', 'char', 'float', 'keyword', 'comentario', 'identificador']
                 print("Error: se esperaba uno de", expected_tokens, "pero se encontró", tok.type)
-                print("En posición:", tok.lexpos)
                 print("En linea:", tok.lineno)
                 tok = recuperar_modo_panico(expected_tokens, tok)
                 if tok is None or tok.type == 'eof':
@@ -281,9 +281,11 @@ def miParser():
                 # Manejo de Errores y Recuperación
                 if celda is None:
                     print("Error detectado")
-                    expected_tokens = find_expected_tokens(x)
+                    expected_tokens = buscar_token_esperado(x)
+                    if len(expected_tokens) == 0:
+                        expected_tokens = ['hashToken', 'int', 'char', 'float', 'keyword', 'comentario',
+                                           'identificador']
                     print("Error: se esperaba uno de", expected_tokens, "pero se encontró", tok.type)
-                    print("En posición:", tok.lexpos)
                     print("En linea:", tok.lineno)
                     print("celda: ", celda)
                     tok = recuperar_modo_panico(expected_tokens, tok)
