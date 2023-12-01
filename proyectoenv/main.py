@@ -266,7 +266,7 @@ def miParser():
                 print("Error: se esperaba uno de", expected_tokens, "pero se encontró", tok.type)
                 print("En posición:", tok.lexpos)
                 print("En linea:", tok.lineno)
-                tok = panic_mode_recovery(expected_tokens, tok)
+                tok = recuperar_modo_panico(expected_tokens, tok)
                 if tok is None or tok.type == 'eof':
                     print("No se pudo recuperar del error.")
                     return 0
@@ -282,11 +282,11 @@ def miParser():
                 if celda is None:
                     print("Error detectado")
                     expected_tokens = find_expected_tokens(x)
-                    print("Error: se esperaba uno de", expected_tokens[0], "pero se encontró", tok.type)
+                    print("Error: se esperaba uno de", expected_tokens, "pero se encontró", tok.type)
                     print("En posición:", tok.lexpos)
                     print("En linea:", tok.lineno)
                     print("celda: ", celda)
-                    tok = panic_mode_recovery(expected_tokens, tok)
+                    tok = recuperar_modo_panico(expected_tokens, tok)
                     if tok is None or tok.type == 'eof':
                         print("No se pudo recuperar del error.")
                         return 0
@@ -302,13 +302,11 @@ def miParser():
 
 
 
-def panic_mode_recovery(recovery_tokens, tok):
-    # Bucles que buscan un token de recuperacion y ajustan la pila.
+def recuperar_modo_panico(recovery_tokens, tok):
     while tok is not None and tok.type not in recovery_tokens:
         tok = lexer.token()
     while stack and (stack[-1] not in recovery_tokens and stack[-1] in tokens):
         stack.pop()
-
     if stack and tok is not None:
         return tok
     else:
