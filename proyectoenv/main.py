@@ -301,14 +301,6 @@ def miParser():
                     x = stack[-1]
 
 
-# def barra_de_progreso(duracion, longitud_barra=50):
-#     for i in range(longitud_barra + 1):
-#         porcentaje = int((i / longitud_barra) * 100)
-#         barra = '#' * i + '-' * (longitud_barra - i)
-#         sys.stdout.write(f"\r[{barra}] {porcentaje}%")
-#         sys.stdout.flush()
-#         time.sleep(duracion / longitud_barra)
-#     print()
 
 def panic_mode_recovery(recovery_tokens, tok):
     # Bucles que buscan un token de recuperacion y ajustan la pila.
@@ -318,12 +310,8 @@ def panic_mode_recovery(recovery_tokens, tok):
         stack.pop()
 
     if stack and tok is not None:
-        # barra_de_progreso(2)
-        print(f"Recuperación exitosa, próximo token: {tok.type}, próximo en la pila: {stack[-1]}")
         return tok
     else:
-        # barra_de_progreso(2)
-        print("La pila está vacía después de la recuperación del modo pánico.")
         return tok
 
 
